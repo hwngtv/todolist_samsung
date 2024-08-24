@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "365629396819",
+    "project_id": "note-d7cbb",
+    "storage_bucket": "note-d7cbb.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:365629396819:android:2da3540390a3e4519c33a6",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClQxoEfM6rNCwbHrxO27Os7LNUhnVIBFI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
