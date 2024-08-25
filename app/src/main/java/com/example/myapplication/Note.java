@@ -7,7 +7,10 @@ public class Note {
     String title;
     String content;
     Timestamp timestamp;
-
+    //private String id;
+//    public String getId() {
+//        return id;
+//    }
     public Note() {
     }
 
