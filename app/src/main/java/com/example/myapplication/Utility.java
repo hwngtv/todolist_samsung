@@ -16,10 +16,10 @@ public class Utility {
         Toast.makeText(context,message,Toast.LENGTH_SHORT).show();
     }
 
-    static CollectionReference getCollectionReferenceForNotes(){
+    static CollectionReference getCollectionReferenceForWorks(){
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        return FirebaseFirestore.getInstance().collection("notes")
-                .document(currentUser.getUid()).collection("my_notes");
+        return FirebaseFirestore.getInstance().collection("works")
+                .document(currentUser.getUid()).collection("my_works");
     }
 
     static String timestampToString(Timestamp timestamp){

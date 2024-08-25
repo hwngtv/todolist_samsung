@@ -22,21 +22,21 @@ import com.google.firebase.firestore.Query;
 
 public class MainActivity extends AppCompatActivity {
 
-    FloatingActionButton addNoteBtn;
+    FloatingActionButton addWorkBtn;
     RecyclerView recyclerView;
     ImageButton menuBtn;
-    NoteAdapter noteAdapter;
+    WorkAdapter workAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        addNoteBtn = findViewById(R.id.add_note_btn);
+        addWorkBtn = findViewById(R.id.add_work_btn);
         recyclerView = findViewById(R.id.recyler_view);
         menuBtn = findViewById(R.id.menu_btn);
 
-        addNoteBtn.setOnClickListener((v)-> startActivity(new Intent(MainActivity.this,NoteDetailsActivity.class)) );
+        addWorkBtn.setOnClickListener((v)-> startActivity(new Intent(MainActivity.this,WorkDetailsActivity.class)) );
         menuBtn.setOnClickListener((v)->showMenu() );
         setupRecyclerView();
     }
@@ -61,15 +61,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void setupRecyclerView(){
-        Query query  = Utility.getCollectionReferenceForNotes().orderBy("timestamp",Query.Direction.DESCENDING);
-        FirestoreRecyclerOptions<Note> options = new FirestoreRecyclerOptions.Builder<Note>()
-                .setQuery(query,Note.class).build();
+        Query query  = Utility.getCollectionReferenceForWorks().orderBy("timestamp",Query.Direction.DESCENDING);
+        FirestoreRecyclerOptions<Work> options = new FirestoreRecyclerOptions.Builder<Work>()
+                .setQuery(query,Work.class).build();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        noteAdapter = new NoteAdapter(options,this);
-        recyclerView.setAdapter(noteAdapter);
+        workAdapter = new WorkAdapter(options,this);
+        recyclerView.setAdapter(workAdapter);
 
         // Thiết lập ItemTouchHelper cho RecyclerView
-        ItemTouchHelper.Callback callback = new ItemTouchHelperCallback(noteAdapter);
+        ItemTouchHelper.Callback callback = new ItemTouchHelperCallback(workAdapter);
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
         itemTouchHelper.attachToRecyclerView(recyclerView);
     }
@@ -77,18 +77,18 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        noteAdapter.startListening();
+        workAdapter.startListening();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        noteAdapter.stopListening();
+        workAdapter.stopListening();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        noteAdapter.notifyDataSetChanged();
+        workAdapter.notifyDataSetChanged();
     }
 }
