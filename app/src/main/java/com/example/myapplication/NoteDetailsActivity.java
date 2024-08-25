@@ -21,7 +21,7 @@ import com.google.firebase.firestore.DocumentReference;
 public class NoteDetailsActivity extends AppCompatActivity {
 
     EditText titleEditText,contentEditText;
-    ImageButton saveNoteBtn;
+    ImageButton saveNoteBtn,backNoteDetailBtn;
     TextView pageTitleTextView;
     String title,content,docId;
     boolean isEditMode = false;
@@ -35,6 +35,7 @@ public class NoteDetailsActivity extends AppCompatActivity {
         titleEditText = findViewById(R.id.notes_title_text);
         contentEditText = findViewById(R.id.notes_content_text);
         saveNoteBtn = findViewById(R.id.save_note_btn);
+        backNoteDetailBtn = findViewById(R.id.back_note_detail);
         pageTitleTextView = findViewById(R.id.page_title);
         deleteNoteTextViewBtn  = findViewById(R.id.delete_note_text_view_btn);
 
@@ -55,11 +56,13 @@ public class NoteDetailsActivity extends AppCompatActivity {
         }
 
         saveNoteBtn.setOnClickListener( (v)-> saveNote());
-
+        backNoteDetailBtn.setOnClickListener((v)->backnoteDetail());
         deleteNoteTextViewBtn.setOnClickListener((v)-> deleteNoteFromFirebase() );
 
     }
-
+    void backnoteDetail(){
+        finish();
+    }
     void saveNote(){
         String noteTitle = titleEditText.getText().toString();
         String noteContent = contentEditText.getText().toString();

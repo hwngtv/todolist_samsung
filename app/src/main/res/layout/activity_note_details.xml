@@ -15,8 +15,10 @@
 
         <TextView
             android:id="@+id/page_title"
-            android:layout_width="wrap_content"
+
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:text="Add New Note"
             android:textColor="@color/white"
             android:textSize="32sp"
@@ -30,9 +32,20 @@
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             app:tint="@color/white"
-            android:background="?attr/selectableItemBackgroundBorderless"
+           android:background="?attr/selectableItemBackgroundBorderless"
 
             />
+
+        <ImageButton
+            android:id="@+id/back_note_detail"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="340dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_baseline_back_24"
+
+            app:tint="@color/white" />
 
     </RelativeLayout>
 
@@ -81,7 +94,6 @@
         android:textSize="18sp"
         android:visibility="gone"
         android:textColor="#FF0000"/>
-
 
 
 </RelativeLayout>
