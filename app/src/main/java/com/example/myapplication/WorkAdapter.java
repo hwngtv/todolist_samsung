@@ -57,8 +57,8 @@ public class WorkAdapter extends FirestoreRecyclerAdapter<Work, WorkAdapter.Work
                     Intent intent = new Intent(context, WorkDetailsActivity.class);
                     intent.putExtra("title", work.getTitle());
                     intent.putExtra("content", work.getContent());
-                    intent.putExtra("date",work.getDate());
-                    intent.putExtra("time",work.getTime());
+                    intent.putExtra("date", work.getDate());
+                    intent.putExtra("time", work.getTime());
                     String docId = getSnapshots().getSnapshot(position).getId();
                     intent.putExtra("docId", docId);
                     context.startActivity(intent);

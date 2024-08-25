@@ -33,6 +33,10 @@ public class WorkDetailsActivity extends AppCompatActivity {
     boolean isEditMode = false;
     TextView deleteWorkTextViewBtn;
 
+    // Variables to store selected date and time
+    private Calendar selectedDate = Calendar.getInstance();
+    private int selectedYear, selectedMonth, selectedDay, selectedHour, selectedMinute;
+
     private int year, month, day, hour, minute;
     ImageView calendarImageView,clockImageView;
     TextView dateTextView,timeTextView;
@@ -71,8 +75,13 @@ public class WorkDetailsActivity extends AppCompatActivity {
         if(isEditMode){
             pageTitleTextView.setText("Edit your work");
             deleteWorkTextViewBtn.setVisibility(View.VISIBLE);
+        }else{
+            dateTextView.setText("Date");
+            timeTextView.setText("Time");
         }
-// Set click listener for the calendar image view
+
+
+        // Set click listener for the calendar image view
         calendarImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -86,28 +95,17 @@ public class WorkDetailsActivity extends AppCompatActivity {
                 DatePickerDialog datePickerDialog = new DatePickerDialog(WorkDetailsActivity.this, new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                        // Create a Calendar object with the selected date
-                        Calendar selectedDate = Calendar.getInstance();
+                        // Set the selected date in the selectedDate Calendar object
                         selectedDate.set(year, monthOfYear, dayOfMonth);
 
-                        // Get the current date
-                        Calendar currentDate = Calendar.getInstance();
+                        // Display the selected date
+                        String selectedDateStr = dayOfMonth + "/0" + (monthOfYear + 1) + "/" + year;
+                        dateTextView.setText(selectedDateStr);
 
-                        // Compare the selected date with the current date
-                        if (selectedDate.before(currentDate)) {
-                            // Selected date is in the past, show an error message
-                            Toast.makeText(WorkDetailsActivity.this, "Please select a date in the future", Toast.LENGTH_SHORT).show();
-                        } else {
-                            // Store the selected date in variables
-                            // AddTaskFragment.this.year = year; // Remove this line as it's not applicable
-                            int selectedYear = year; // Instead, use local variables or class member variables if needed
-                            int selectedMonth = monthOfYear;
-                            int selectedDay = dayOfMonth;
-
-                            // Display the selected date
-                            String selectedDateStr = dayOfMonth + "/0" + (monthOfYear + 1) + "/" + year;
-                            dateTextView.setText(selectedDateStr);
-                        }
+                        // Store the selected date in variables
+                        selectedYear = year;
+                        selectedMonth = monthOfYear;
+                        selectedDay = dayOfMonth;
                     }
                 }, currentYear, currentMonth, currentDay);
 
@@ -115,6 +113,7 @@ public class WorkDetailsActivity extends AppCompatActivity {
                 datePickerDialog.show();
             }
         });
+
         // Set click listener for the clock image view
         clockImageView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -127,40 +126,22 @@ public class WorkDetailsActivity extends AppCompatActivity {
 
                     @Override
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                        // Create a calendar object with the selected time
-                        Calendar selectedDateTime = Calendar.getInstance();
-                        selectedDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
-                        selectedDateTime.set(Calendar.MINUTE, minute);
+                        // Set the selected time in the selectedDate Calendar object
+                        selectedDate.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                        selectedDate.set(Calendar.MINUTE, minute);
+                        selectedDate.set(Calendar.SECOND, 0);  // Reset seconds to 0 for accurate comparison
 
-                        // Assume you have the selectedDate from your date picker already set in another part of your code
                         // Compare the selected date and time with the current date and time
-                        if (selectedDateTime.getTimeInMillis() > currentDateTime.getTimeInMillis()) {
+                        if (selectedDate.after(currentDateTime)) {
                             // The selected date and time is in the future
-                            // Store the selected time in variables
-                            hour = hourOfDay;
-                            minute = minute;
+                            selectedHour = hourOfDay;
+                            selectedMinute = minute;
 
                             // Display the selected time
                             String selectedTimeStr = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute);
                             timeTextView.setText(selectedTimeStr);
-                        } else if (selectedDateTime.get(Calendar.YEAR) == currentDateTime.get(Calendar.YEAR) &&
-                                selectedDateTime.get(Calendar.DAY_OF_YEAR) == currentDateTime.get(Calendar.DAY_OF_YEAR)) {
-                            // If the selected date is today, check only the time
-                            if (hourOfDay > currentDateTime.get(Calendar.HOUR_OF_DAY) ||
-                                    (hourOfDay == currentDateTime.get(Calendar.HOUR_OF_DAY) && minute > currentDateTime.get(Calendar.MINUTE))) {
-                                // The selected time is in the future
-                                hour = hourOfDay;
-                                minute = minute;
-
-                                // Display the selected time
-                                String selectedTimeStr = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute);
-                                timeTextView.setText(selectedTimeStr);
-                            } else {
-                                // The selected time is in the past or too close to the current time
-                                Toast.makeText(WorkDetailsActivity.this, "Please select a time in the future", Toast.LENGTH_SHORT).show();
-                            }
                         } else {
-                            // The selected date is not today and is in the past
+                            // The selected time is in the past or too close to the current time
                             Toast.makeText(WorkDetailsActivity.this, "Please select a time in the future", Toast.LENGTH_SHORT).show();
                         }
                     }
@@ -170,6 +151,7 @@ public class WorkDetailsActivity extends AppCompatActivity {
                 timePickerDialog.show();
             }
         });
+
 
         saveWorkBtn.setOnClickListener( (v)-> saveWork());
         backWorkDetailBtn.setOnClickListener((v)->backworkDetail());
