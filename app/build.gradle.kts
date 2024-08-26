@@ -33,7 +33,8 @@ android {
 }
 
 dependencies {
-
+    implementation ("androidx.work:work-runtime:2.8.1")
+    implementation ("com.google.guava:guava:31.0.1-android") // Thêm dependency cho Guava nếu cần
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

@@ -1,12 +1,19 @@
 package com.example.myapplication;
 
+import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.app.PendingIntent;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -19,6 +26,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.WorkRequest;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -30,9 +40,11 @@ import com.google.firebase.storage.StorageReference;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class WorkDetailsActivity extends AppCompatActivity {
     private static final int PICK_IMAGE_REQUEST = 1;
+    public static final String TAG = "abc123" ;
 
     EditText titleEditText, contentEditText;
     ImageButton saveWorkBtn, backWorkDetailBtn;
@@ -40,7 +52,6 @@ public class WorkDetailsActivity extends AppCompatActivity {
     String title, content, docId, date, time;
     boolean isEditMode = false;
     TextView deleteWorkTextViewBtn;
-
     private ImageView imageImageView;
     private Uri imageUri;
 
@@ -51,10 +62,13 @@ public class WorkDetailsActivity extends AppCompatActivity {
     private Calendar selectedDate = Calendar.getInstance();
     private int selectedYear, selectedMonth, selectedDay, selectedHour, selectedMinute;
 
+    private AlarmReceiver alarmReceiver;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_work_details);
+
 
         titleEditText = findViewById(R.id.works_title_text);
         contentEditText = findViewById(R.id.works_content_text);
@@ -206,11 +220,48 @@ public class WorkDetailsActivity extends AppCompatActivity {
         documentReference.set(work).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Utility.showToast(WorkDetailsActivity.this, "Work added successfully");
+                //Set up the alarm for the reminder
+                setReminder(work);
                 finish();
             } else {
                 Utility.showToast(WorkDetailsActivity.this, "Failed while adding work");
             }
         });
+    }
+
+    @SuppressLint("ScheduleExactAlarm")
+    private void setReminder(Work work) {
+        //Create a Calendar object with the selected date and time
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(work.getYear(), work.getMonth()-1, work.getDay(), work.getHour(), work.getMinute());
+        calendar.set(Calendar.SECOND, 0);
+
+//        Intent intent = new Intent("com.example.ALARM_ACTION");
+//        intent.putExtra("title", work.getTitle());
+//        intent.putExtra("content", work.getContent());
+//        PendingIntent pendingIntent = PendingIntent.getBroadcast(WorkDetailsActivity.this, 0, intent,PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT );
+//        // Cài đặt AlarmManager
+//        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+//        if (alarmManager != null) {
+//            Log.d(TAG,"preparing to notification");
+//            Calendar curCalendar = Calendar.getInstance();
+//            Log.d(TAG,"time: " + curCalendar.getTime()) ;
+//            alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis()-3600000, pendingIntent);
+//        }else {
+//            Log.e(TAG, "AlarmManager is null");
+//        }
+        // Đặt báo thức để khởi động Service
+        // Đặt công việc bằng WorkManager
+        Calendar curCalendar = Calendar.getInstance();
+        long timeDelay = calendar.getTimeInMillis() - curCalendar.getTimeInMillis() - 3600000;
+
+        WorkRequest workRequest = new OneTimeWorkRequest.Builder(NotificationWorker.class)
+                .setInitialDelay(timeDelay, TimeUnit.MILLISECONDS) // Thay delayInMillis bằng thời gian trễ tính bằng milliseconds
+                .build();
+
+        WorkManager.getInstance().enqueue(workRequest);
+
+
     }
 
     private void confirmDeleteWork() {
@@ -232,5 +283,11 @@ public class WorkDetailsActivity extends AppCompatActivity {
                 Utility.showToast(WorkDetailsActivity.this, "Failed to delete work");
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
     }
 }
