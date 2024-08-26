@@ -1,24 +1,24 @@
 package com.example.myapplication;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 
-public class WorkAdapter extends FirestoreRecyclerAdapter<Work, WorkAdapter.WorkViewHolder> implements ItemTouchHelperAdapter{
+public class WorkAdapter extends FirestoreRecyclerAdapter<Work, WorkAdapter.WorkViewHolder> implements ItemTouchHelperAdapter {
 
     private Context context;
-    private TextView monthTextView;
-    private TextView dateTextView;
-    private TextView yearTextView;
 
     public WorkAdapter(@NonNull FirestoreRecyclerOptions<Work> options, Context context) {
         super(options);
@@ -33,6 +33,18 @@ public class WorkAdapter extends FirestoreRecyclerAdapter<Work, WorkAdapter.Work
         holder.monthTextView.setText(getMonthString(work.getMonth()));
         holder.yearTextView.setText(String.valueOf(work.getYear()));
         holder.dateTextView.setText(String.valueOf(work.getDay()));
+
+        // Load image using Glide
+        if (work.getUrlImage() != null && !work.getUrlImage().isEmpty()) {
+            Glide.with(context)
+                    .load(work.getUrlImage())
+                    .placeholder(R.drawable.task_time) // Đặt ảnh placeholder
+                    .error(R.drawable.task_time) // Đặt ảnh lỗi
+                    .into(holder.pictureImageView);
+        } else {
+            // Placeholder image or clear the image if no URL is provided
+            holder.pictureImageView.setImageResource(R.drawable.task_time); // Đặt ảnh placeholder mặc định
+        }
 
         // Đếm số lần click
         holder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -94,7 +106,8 @@ public class WorkAdapter extends FirestoreRecyclerAdapter<Work, WorkAdapter.Work
     }
 
     class WorkViewHolder extends RecyclerView.ViewHolder {
-        TextView titleTextView, contentTextView, timestampTextView,monthTextView,dateTextView,yearTextView;
+        TextView titleTextView, contentTextView, timestampTextView, monthTextView, dateTextView, yearTextView;
+        ImageView pictureImageView;
 
         public WorkViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -104,8 +117,10 @@ public class WorkAdapter extends FirestoreRecyclerAdapter<Work, WorkAdapter.Work
             monthTextView = itemView.findViewById(R.id.monthTextView);
             dateTextView = itemView.findViewById(R.id.dateTextView);
             yearTextView = itemView.findViewById(R.id.yearTextView);
+            pictureImageView = itemView.findViewById(R.id.pictureImageView); // Add reference to ImageView
         }
     }
+
     private String getMonthString(int month) {
         String[] monthArray = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
         if (month >= 1 && month <= 12) {

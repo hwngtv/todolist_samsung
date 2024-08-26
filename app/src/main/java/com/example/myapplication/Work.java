@@ -14,6 +14,11 @@ public class Work {
     Timestamp timestamp;
     String date;
     String time;
+    String urlImage;
+
+    public String getUrlImage() {
+        return urlImage;
+    }
 
     public String getDate() {
         return date;
@@ -21,6 +26,10 @@ public class Work {
 
     public void setDate(String date) {
         this.date = date;
+    }
+
+    public void setUrlImage(String urlImage) {
+        this.urlImage = urlImage;
     }
 
     public String getTime() {

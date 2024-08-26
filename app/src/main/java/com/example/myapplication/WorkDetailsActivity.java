@@ -1,7 +1,10 @@
 package com.example.myapplication;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -14,32 +17,40 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.UUID;
 
 public class WorkDetailsActivity extends AppCompatActivity {
+    private static final int PICK_IMAGE_REQUEST = 1;
 
-    EditText titleEditText,contentEditText;
-    ImageButton saveWorkBtn,backWorkDetailBtn;
+    EditText titleEditText, contentEditText;
+    ImageButton saveWorkBtn, backWorkDetailBtn;
     TextView pageTitleTextView;
-    String title,content,docId,date,time;
+    String title, content, docId, date, time;
     boolean isEditMode = false;
     TextView deleteWorkTextViewBtn;
+
+    private ImageView imageImageView;
+    private Uri imageUri;
+
+    ImageView calendarImageView, clockImageView;
+    TextView dateTextView, timeTextView;
 
     // Variables to store selected date and time
     private Calendar selectedDate = Calendar.getInstance();
     private int selectedYear, selectedMonth, selectedDay, selectedHour, selectedMinute;
 
-    private int year, month, day, hour, minute;
-    ImageView calendarImageView,clockImageView;
-    TextView dateTextView,timeTextView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,21 +61,22 @@ public class WorkDetailsActivity extends AppCompatActivity {
         saveWorkBtn = findViewById(R.id.save_work_btn);
         backWorkDetailBtn = findViewById(R.id.back_work_detail);
         pageTitleTextView = findViewById(R.id.page_title);
-        deleteWorkTextViewBtn  = findViewById(R.id.delete_work_text_view_btn);
+        deleteWorkTextViewBtn = findViewById(R.id.delete_work_text_view_btn);
 
         calendarImageView = findViewById(R.id.calendarImageView);
         clockImageView = findViewById(R.id.clockImageView);
         dateTextView = findViewById(R.id.dateTextView);
         timeTextView = findViewById(R.id.timeTextView);
+        imageImageView = findViewById(R.id.imageImageView);
 
-        //receive data
+        // Receive data
         title = getIntent().getStringExtra("title");
-        content= getIntent().getStringExtra("content");
+        content = getIntent().getStringExtra("content");
         docId = getIntent().getStringExtra("docId");
         date = getIntent().getStringExtra("date");
         time = getIntent().getStringExtra("time");
 
-        if(docId!=null && !docId.isEmpty()){
+        if (docId != null && !docId.isEmpty()) {
             isEditMode = true;
         }
 
@@ -72,161 +84,152 @@ public class WorkDetailsActivity extends AppCompatActivity {
         contentEditText.setText(content);
         dateTextView.setText(date);
         timeTextView.setText(time);
-        if(isEditMode){
+
+        if (isEditMode) {
             pageTitleTextView.setText("Edit your work");
             deleteWorkTextViewBtn.setVisibility(View.VISIBLE);
-        }else{
+        } else {
             dateTextView.setText("Date");
             timeTextView.setText("Time");
         }
 
+        // Calendar and time pickers
+        calendarImageView.setOnClickListener(v -> showDatePickerDialog());
+        clockImageView.setOnClickListener(v -> showTimePickerDialog());
 
-        // Set click listener for the calendar image view
-        calendarImageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Get the current date
-                final Calendar calendar = Calendar.getInstance();
-                int currentYear = calendar.get(Calendar.YEAR);
-                int currentMonth = calendar.get(Calendar.MONTH);
-                int currentDay = calendar.get(Calendar.DAY_OF_MONTH);
-
-                // Create a DatePickerDialog to allow the user to select a date
-                DatePickerDialog datePickerDialog = new DatePickerDialog(WorkDetailsActivity.this, new DatePickerDialog.OnDateSetListener() {
-                    @Override
-                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                        // Set the selected date in the selectedDate Calendar object
-                        selectedDate.set(year, monthOfYear, dayOfMonth);
-
-                        // Display the selected date
-                        String selectedDateStr = dayOfMonth + "/0" + (monthOfYear + 1) + "/" + year;
-                        dateTextView.setText(selectedDateStr);
-
-                        // Store the selected date in variables
-                        selectedYear = year;
-                        selectedMonth = monthOfYear;
-                        selectedDay = dayOfMonth;
-                    }
-                }, currentYear, currentMonth, currentDay);
-
-                // Show the DatePickerDialog
-                datePickerDialog.show();
-            }
-        });
-
-        // Set click listener for the clock image view
-        clockImageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Get the current date and time
-                final Calendar currentDateTime = Calendar.getInstance();
-
-                // Create a TimePickerDialog to allow the user to select a time
-                TimePickerDialog timePickerDialog = new TimePickerDialog(WorkDetailsActivity.this, new TimePickerDialog.OnTimeSetListener() {
-
-                    @Override
-                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                        // Set the selected time in the selectedDate Calendar object
-                        selectedDate.set(Calendar.HOUR_OF_DAY, hourOfDay);
-                        selectedDate.set(Calendar.MINUTE, minute);
-                        selectedDate.set(Calendar.SECOND, 0);  // Reset seconds to 0 for accurate comparison
-
-                        // Compare the selected date and time with the current date and time
-                        if (selectedDate.after(currentDateTime)) {
-                            // The selected date and time is in the future
-                            selectedHour = hourOfDay;
-                            selectedMinute = minute;
-
-                            // Display the selected time
-                            String selectedTimeStr = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute);
-                            timeTextView.setText(selectedTimeStr);
-                        } else {
-                            // The selected time is in the past or too close to the current time
-                            Toast.makeText(WorkDetailsActivity.this, "Please select a time in the future", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                }, currentDateTime.get(Calendar.HOUR_OF_DAY), currentDateTime.get(Calendar.MINUTE), true);
-
-                // Show the TimePickerDialog
-                timePickerDialog.show();
-            }
-        });
-
-
-        saveWorkBtn.setOnClickListener( (v)-> saveWork());
-        backWorkDetailBtn.setOnClickListener((v)->backworkDetail());
-        deleteWorkTextViewBtn.setOnClickListener((v)-> deleteWorkFromFirebase() );
-
+        saveWorkBtn.setOnClickListener(v -> uploadImageToFirebaseStorage());
+        backWorkDetailBtn.setOnClickListener(v -> finish());
+        deleteWorkTextViewBtn.setOnClickListener(v -> confirmDeleteWork());
+        imageImageView.setOnClickListener(v -> openFileChooser());
     }
-    void backworkDetail(){
-        finish();
+
+    private void showDatePickerDialog() {
+        final Calendar calendar = Calendar.getInstance();
+        int currentYear = calendar.get(Calendar.YEAR);
+        int currentMonth = calendar.get(Calendar.MONTH);
+        int currentDay = calendar.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(WorkDetailsActivity.this, (view, year, monthOfYear, dayOfMonth) -> {
+            selectedDate.set(year, monthOfYear, dayOfMonth);
+            String selectedDateStr = String.format(Locale.getDefault(), "%02d/%02d/%d", dayOfMonth, (monthOfYear + 1), year);
+            dateTextView.setText(selectedDateStr);
+            selectedYear = year;
+            selectedMonth = monthOfYear;
+            selectedDay = dayOfMonth;
+        }, currentYear, currentMonth, currentDay);
+
+        datePickerDialog.show();
     }
-    void saveWork(){
-        String workTitle = titleEditText.getText().toString();
-        String workContent = contentEditText.getText().toString();
+
+    private void showTimePickerDialog() {
+        final Calendar currentDateTime = Calendar.getInstance();
+        TimePickerDialog timePickerDialog = new TimePickerDialog(WorkDetailsActivity.this, (view, hourOfDay, minute) -> {
+            selectedDate.set(Calendar.HOUR_OF_DAY, hourOfDay);
+            selectedDate.set(Calendar.MINUTE, minute);
+            selectedDate.set(Calendar.SECOND, 0);
+
+            if (selectedDate.after(currentDateTime)) {
+                selectedHour = hourOfDay;
+                selectedMinute = minute;
+                String selectedTimeStr = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute);
+                timeTextView.setText(selectedTimeStr);
+            } else {
+                Toast.makeText(WorkDetailsActivity.this, "Please select a time in the future", Toast.LENGTH_SHORT).show();
+            }
+        }, currentDateTime.get(Calendar.HOUR_OF_DAY), currentDateTime.get(Calendar.MINUTE), true);
+
+        timePickerDialog.show();
+    }
+
+    private void openFileChooser() {
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(intent, PICK_IMAGE_REQUEST);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            imageUri = data.getData();
+            imageImageView.setImageURI(imageUri);
+        }
+    }
+
+    private void uploadImageToFirebaseStorage() {
+        if (imageUri != null) {
+            StorageReference storageReference = FirebaseStorage.getInstance().getReference("images/" + UUID.randomUUID().toString());
+            storageReference.putFile(imageUri).addOnSuccessListener(taskSnapshot -> {
+                storageReference.getDownloadUrl().addOnSuccessListener(uri -> {
+                    saveWork(uri.toString()); // Lưu công việc với URL ảnh
+                });
+            }).addOnFailureListener(e -> {
+                Toast.makeText(WorkDetailsActivity.this, "Failed to upload image", Toast.LENGTH_SHORT).show();
+            });
+        } else {
+            saveWork(null); // Lưu công việc mà không có URL ảnh
+        }
+    }
+
+    private void saveWork(String urlImage) {
+        String workTitle = titleEditText.getText().toString().trim();
+        String workContent = contentEditText.getText().toString().trim();
         String date = dateTextView.getText().toString().trim();
         String time = timeTextView.getText().toString().trim();
-//        if(workTitle==null || workTitle.isEmpty() ){
-//            titleEditText.setError("Title is required");
-//            return;
-//        }
-        // Validate the input
-        if (TextUtils.isEmpty(workTitle) || TextUtils.isEmpty(date) || TextUtils.isEmpty(time)) {
-            // Show error message if title, date, or time is empty
-            Toast.makeText(WorkDetailsActivity.this, "Please enter both title, date and time", Toast.LENGTH_SHORT).show();
+
+        if (TextUtils.isEmpty(workTitle) || TextUtils.isEmpty(date) || TextUtils.isEmpty(time) || "Date".equals(date) || "Time".equals(time)) {
+            Toast.makeText(WorkDetailsActivity.this, "Vui lòng nhập tiêu đề, ngày, và giờ.", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        // Tiếp tục lưu công việc nếu tất cả thông tin hợp lệ
         Work work = new Work();
         work.setTitle(workTitle);
         work.setContent(workContent);
         work.setTimestamp(Timestamp.now());
         work.setTime(time);
         work.setDate(date);
+        work.setUrlImage(urlImage); // Lưu URL ảnh vào Firestore
 
         saveWorkToFirebase(work);
-
     }
 
-    void saveWorkToFirebase(Work work){
+    private void saveWorkToFirebase(Work work) {
         DocumentReference documentReference;
-        if(isEditMode){
-            //update the work
+        if (isEditMode) {
             documentReference = Utility.getCollectionReferenceForWorks().document(docId);
-        }else{
-            //create new work
+        } else {
             documentReference = Utility.getCollectionReferenceForWorks().document();
         }
 
-
-
-        documentReference.set(work).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                if(task.isSuccessful()){
-                    //work is added
-                    Utility.showToast(WorkDetailsActivity.this,"Work added successfully");
-                    finish();
-                }else{
-                    Utility.showToast(WorkDetailsActivity.this,"Failed while adding work");
-                }
+        documentReference.set(work).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Utility.showToast(WorkDetailsActivity.this, "Work added successfully");
+                finish();
+            } else {
+                Utility.showToast(WorkDetailsActivity.this, "Failed while adding work");
             }
         });
-
     }
 
-    void deleteWorkFromFirebase(){
-        DocumentReference documentReference;
-        documentReference = Utility.getCollectionReferenceForWorks().document(docId);
-        documentReference.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                if(task.isSuccessful()){
-                    //work is deleted
-                    Utility.showToast(WorkDetailsActivity.this,"Work deleted successfully");
-                    finish();
-                }else{
-                    Utility.showToast(WorkDetailsActivity.this,"Failed while deleting work");
-                }
+    private void confirmDeleteWork() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete Work")
+                .setMessage("Are you sure you want to delete this work?")
+                .setPositiveButton("Yes", (dialog, which) -> deleteWorkFromFirebase())
+                .setNegativeButton("No", null)
+                .show();
+    }
+
+    private void deleteWorkFromFirebase() {
+        DocumentReference documentReference = Utility.getCollectionReferenceForWorks().document(docId);
+        documentReference.delete().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Utility.showToast(WorkDetailsActivity.this, "Work deleted successfully");
+                finish();
+            } else {
+                Utility.showToast(WorkDetailsActivity.this, "Failed to delete work");
             }
         });
     }
