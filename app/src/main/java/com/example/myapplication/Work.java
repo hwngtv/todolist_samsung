@@ -102,4 +102,33 @@ public class Work {
         return null; // Return null if parsing failed
     }
 
+    public int getHour() {
+        if (time != null && !time.isEmpty()) {
+            String[] parts = time.split(":");
+            if (parts.length == 2) {
+                try {
+                    return Integer.parseInt(parts[0]); // Lấy giờ từ chuỗi time
+                } catch (NumberFormatException e) {
+                    e.printStackTrace(); // Xử lý lỗi nếu việc chuyển đổi thất bại
+                }
+            }
+        }
+        return -1; // Trả về -1 nếu có lỗi
+    }
+
+    public int getMinute() {
+        if (time != null && !time.isEmpty()) {
+            String[] parts = time.split(":");
+            if (parts.length == 2) {
+                try {
+                    return Integer.parseInt(parts[1]); // Lấy phút từ chuỗi time
+                } catch (NumberFormatException e) {
+                    e.printStackTrace(); // Xử lý lỗi nếu việc chuyển đổi thất bại
+                }
+            }
+        }
+        return -1; // Trả về -1 nếu có lỗi
+    }
+
+
 }
