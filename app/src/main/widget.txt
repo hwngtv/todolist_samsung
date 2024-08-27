@@ -1,0 +1,143 @@
++++++ Bước 1: WorkWidgetProvider
+package com.example.myapplication;
+
+import android.app.PendingIntent;
+import android.appwidget.AppWidgetManager;
+import android.appwidget.AppWidgetProvider;
+import android.content.Context;
+import android.content.Intent;
+import android.widget.RemoteViews;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+public class WorkWidgetProvider extends AppWidgetProvider {
+
+    @Override
+    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+        // Cập nhật từng widget được yêu cầu
+        for (int appWidgetId : appWidgetIds) {
+            // Lấy dữ liệu công việc của ngày hôm nay và cập nhật widget
+            getTodayWorks(context, appWidgetManager, appWidgetId);
+        }
+    }
+
+    private void getTodayWorks(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        CollectionReference worksRef = db.collection("works");
+
+        // Lấy ngày hiện tại
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayDate = dateFormat.format(new Date());
+
+        // Truy vấn Firestore để lấy các công việc diễn ra trong ngày hôm nay
+        worksRef.whereEqualTo("date", todayDate)
+                .orderBy("timestamp", Query.Direction.ASCENDING)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        List<String> workDetails = new ArrayList<>();
+                        for (DocumentSnapshot document : task.getResult()) {
+                            String title = document.getString("title");
+                            String time = document.getString("time");
+                            if (title != null && time != null) {
+                                workDetails.add(title + " at " + time);
+                            }
+                        }
+                        // Cập nhật widget với dữ liệu lấy được từ Firestore
+                        updateAppWidget(context, appWidgetManager, appWidgetId, workDetails);
+                    } else {
+                        // Xử lý lỗi nếu cần
+                        updateAppWidget(context, appWidgetManager, appWidgetId, new ArrayList<>());
+                    }
+                });
+    }
+
+    private void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId, List<String> workDetails) {
+        // Lấy layout widget
+        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_work);
+
+        // Cập nhật danh sách công việc lên widget
+        views.setTextViewText(R.id.work1, workDetails.size() > 0 ? workDetails.get(0) : "");
+        views.setTextViewText(R.id.work2, workDetails.size() > 1 ? workDetails.get(1) : "");
+        views.setTextViewText(R.id.work3, workDetails.size() > 2 ? workDetails.get(2) : "");
+        views.setTextViewText(R.id.work4, workDetails.size() > 3 ? workDetails.get(3) : "");
+
+        // Tạo một Intent khi người dùng nhấn vào widget để mở ứng dụng ToDo List
+        Intent intent = new Intent(context, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        views.setOnClickPendingIntent(R.id.widget_layout, pendingIntent);
+
+        // Cập nhật widget với AppWidgetManager
+        appWidgetManager.updateAppWidget(appWidgetId, views);
+    }
+}
+
++++++ Bước 2:AndroidManifest.xml
+<receiver android:name=".WorkWidgetProvider">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+    </intent-filter>
+    <meta-data android:name="android.appwidget.provider"
+        android:resource="@xml/work_widget_info" />
+</receiver>
+
+++++++ Bước 3: Trong thư mục res/xml, tạo một tệp work_widget_info.xml:
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:initialLayout="@layout/widget_work"
+    android:minWidth="250dp"
+    android:minHeight="100dp"
+    android:updatePeriodMillis="86400000"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen">
+</appwidget-provider>
+
++++++Bước 4: Trong thư mục res/layout, tạo một tệp widget_work.xml:
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_layout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/widget_background">
+
+    <TextView
+        android:id="@+id/work1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Work 1"
+        android:textSize="16sp"
+        android:textColor="@android:color/black"/>
+
+    <TextView
+        android:id="@+id/work2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Work 2"
+        android:textSize="16sp"
+        android:textColor="@android:color/black"/>
+
+    <TextView
+        android:id="@+id/work3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Work 3"
+        android:textSize="16sp"
+        android:textColor="@android:color/black"/>
+
+    <TextView
+        android:id="@+id/work4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Work 4"
+        android:textSize="16sp"
+        android:textColor="@android:color/black"/>
+</LinearLayout>
